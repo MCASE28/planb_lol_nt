@@ -23,6 +23,7 @@
             --delay-team: 500;        /* 팀 결정 즉시 멈춤 */
             --delay-user: 2000;     /* 유저 휠 멈춤 딜레이 */
             --delay-position: 4000; /* 포지션 휠 멈춤 딜레이 */
+            --delay-next-spin: 2000; /* 결과 나온 후 다음 스핀까지 클릭 방지 딜레이 */
             
             --result-text-size: 2rem; /* 결과 텍스트 크기 */
 
@@ -209,6 +210,13 @@
             color: white;
         }
 
+        #spin-btn:disabled {
+            background-color: #555;
+            color: #aaa;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
         .team-indicator {
             font-size: 2rem;
             font-weight: bold;
@@ -306,6 +314,19 @@
         #reset-btn:hover {
             background-color: #777;
         }
+
+        .pos-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .pos-text {
+            margin-top: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -366,6 +387,13 @@
         ];
 
         const positions = ["top", "mid", "bottom", "support", "jungle"];
+        const positionNames = {
+            "top": "탑",
+            "mid": "미드",
+            "bottom": "바텀",
+            "support": "서폿",
+            "jungle": "정글"
+        };
         let activeUserIndices = new Set();
         let isSpinning = false;
         let animationId = null;
@@ -484,7 +512,12 @@
                 segment.style.transform = `rotate(${i * angle}deg)`;
                 
                 if (isPos) {
-                    segment.innerHTML = `<img src="./assets/${item}.png" class="pos-img" alt="${item}">`;
+                    segment.innerHTML = `
+                        <div class="pos-wrapper">
+                            <img src="./assets/${item}.png" class="pos-img" alt="${item}">
+                            <div class="pos-text">${positionNames[item]}</div>
+                        </div>
+                    `;
                 } else {
                     segment.innerHTML = `<div class="wheel-label">${item}</div>`;
                 }
@@ -562,12 +595,14 @@
             isSpinning = false; // 버튼 상태 변경용
             spinBtn.innerText = 'Spin';
             spinBtn.classList.remove('stopping');
+            spinBtn.disabled = true;
 
             // 딜레이 설정 값 가져오기
             const rootStyle = getComputedStyle(document.documentElement);
             const delayTeam = parseInt(rootStyle.getPropertyValue('--delay-team').trim()) || 0;
             const delayUser = parseInt(rootStyle.getPropertyValue('--delay-user').trim()) || 1000;
             const delayPos = parseInt(rootStyle.getPropertyValue('--delay-position').trim()) || 2000;
+            const delayNextSpin = parseInt(rootStyle.getPropertyValue('--delay-next-spin').trim()) || 2000;
 
             // 결과 미리 결정
             const activeUsers = Array.from(activeUserIndices).map(i => userList[i])
@@ -576,6 +611,7 @@
             if (activeUsers.length === 0) {
                 alert("남은 유저가 없습니다.");
                 cancelAnimationFrame(animationId);
+                spinBtn.disabled = false;
                 return;
             }
 
@@ -649,6 +685,11 @@
                 resultDisplay.innerText = `${selectedUser} - ${team.toUpperCase()} - ${selectedPos.toUpperCase()}`;
                 resultDisplay.style.color = team === 'red' ? 'var(--red-color)' : 'var(--blue-color)';
             }, maxDelay + 1500);
+
+            // 버튼 다시 활성화
+            setTimeout(() => {
+                spinBtn.disabled = false;
+            }, maxDelay + 1500 + delayNextSpin);
         }
 
         init();
