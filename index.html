@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>플랜비 롤 내전 포지션 선택기</title>
+    <style>
+        :root {
+            /* 1. 파라미터 설정 */
+            --user-icon-width: 80px;
+            --user-icon-height: 80px;
+            --title-img-width: 300px;
+            --title-img-height: auto;
+            --roulette-speed: 10s; /* 1바퀴 도는 시간 (사용자 정의) */
+            
+            /* 휠 및 아이콘 크기 설정 */
+            --wheel-size: 350px;           /* 룰렛 전체 크기 */
+            --pos-icon-size-wheel: 70px;   /* 룰렛 내 포지션 아이콘 크기 */
+            --user-font-size-wheel: 1.1rem; /* 룰렛 내 유저 이름 폰트 크기 */
+            --wheel-border-color: rgba(255, 255, 255, 0.2); /* 룰렛 칸 경계선 색상 */
+
+            /* 멈추는 딜레이 설정 (밀리초) */
+            --delay-team: 0;        /* 팀 결정 즉시 멈춤 */
+            --delay-user: 1000;     /* 유저 휠 멈춤 딜레이 */
+            --delay-position: 2000; /* 포지션 휠 멈춤 딜레이 */
+            
+            --result-text-size: 2rem; /* 결과 텍스트 크기 */
+
+            --red-color: #ff4d4d;
+            --blue-color: #4d79ff;
+            --bg-color: #1a1a1a;
+            --text-color: #ffffff;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Malgun Gothic', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        #result-display {
+            font-size: var(--result-text-size);
+            font-weight: bold;
+            margin-bottom: 20px;
+            min-height: 1.2em; /* 공간 확보 */
+            text-align: center;
+            color: #f0d028; /* 기본 강조색 */
+        }
+
+
+        #title-container img {
+            width: var(--title-img-width);
+            height: var(--title-img-height);
+            margin-bottom: 20px;
+        }
+
+        /* STEP 1: 유저 선택 화면 */
+        #user-selection {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .user-item {
+            width: var(--user-icon-width);
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+            opacity: 0.5;
+            border: 2px solid transparent;
+            padding: 5px;
+            border-radius: 8px;
+        }
+
+        .user-item.active {
+            opacity: 1;
+            border-color: #f0d028;
+            background-color: rgba(240, 208, 40, 0.1);
+        }
+
+        .user-item:hover {
+            transform: scale(1.05);
+        }
+
+        .user-icon {
+            width: 100%;
+            height: var(--user-icon-height);
+            background-color: #333;
+            border-radius: 50%;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #aaa;
+        }
+
+        .user-item.active .user-icon {
+            color: #fff;
+            background-color: #555;
+        }
+
+        #confirm-btn {
+            padding: 10px 40px;
+            font-size: 1.2rem;
+            background-color: #444;
+            color: #888;
+            border: none;
+            border-radius: 5px;
+            cursor: not-allowed;
+        }
+
+        #confirm-btn.enabled {
+            background-color: #f0d028;
+            color: #000;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        /* STEP 2: 룰렛 화면 */
+        #roulette-container {
+            display: none;
+            width: 100%;
+            max-width: 1000px;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .team-display {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .team-box {
+            width: 45%;
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 10px;
+            min-height: 250px;
+        }
+
+        .team-red { border-color: var(--red-color); }
+        .team-blue { border-color: var(--blue-color); }
+
+        .team-title {
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .team-red .team-title { color: var(--red-color); }
+        .team-blue .team-title { color: var(--blue-color); }
+
+        .position-slot {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            height: 40px;
+        }
+
+        .pos-icon {
+            width: 30px;
+            height: 30px;
+            margin-right: 10px;
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
+        .spin-controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        #spin-btn {
+            padding: 15px 60px;
+            font-size: 1.5rem;
+            background-color: #f0d028;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(240, 208, 40, 0.3);
+        }
+
+        #spin-btn.stopping {
+            background-color: #ff4d4d;
+            color: white;
+        }
+
+        .team-indicator {
+            font-size: 2rem;
+            font-weight: bold;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wheels-wrapper {
+            display: flex;
+            gap: 50px;
+            perspective: 1000px;
+        }
+
+        .wheel-container {
+            width: var(--wheel-size);
+            height: var(--wheel-size);
+            border: 5px solid #555;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            background: #222;
+        }
+
+        .wheel-inner {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            transition: transform cubic-bezier(0.1, 0, 0.1, 1);
+        }
+
+        .wheel-segment {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            padding-top: 25px; /* 중앙에서 좀 더 떨어지게 조정 */
+            box-sizing: border-box;
+            transform-origin: 50% 50%;
+        }
+
+        .wheel-label {
+            transform: rotate(0deg);
+            font-weight: bold;
+            font-size: var(--user-font-size-wheel);
+            white-space: nowrap;
+        }
+
+        .pos-img {
+            width: var(--pos-icon-size-wheel);
+            height: var(--pos-icon-size-wheel);
+        }
+
+        .wheel-divider {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 50%;
+            background-color: var(--wheel-border-color);
+            transform-origin: bottom center;
+            z-index: 1;
+        }
+
+
+
+        .wheel-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 25px solid #f0d028;
+            z-index: 10;
+        }
+
+        #reset-btn {
+            padding: 10px 30px;
+            font-size: 1.2rem;
+            background-color: #555;
+            color: #fff;
+            border: 2px solid #777;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 30px;
+            transition: background-color 0.2s;
+        }
+
+        #reset-btn:hover {
+            background-color: #777;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="title-container">
+        <img src="./assets/title.png" alt="League of Legends Custom Match Tool">
+    </div>
+
+    <!-- STEP 1: 유저 선택 -->
+    <div id="user-selection">
+        <div class="user-grid" id="user-grid">
+            <!-- 유저 아이콘들이 동적으로 생성됨 -->
+        </div>
+        <button id="confirm-btn">확인</button>
+    </div>
+
+    <!-- STEP 2: 룰렛 -->
+    <div id="roulette-container">
+        <button id="reset-btn">RESET</button>
+
+        <div class="team-display">
+            <div class="team-box team-red">
+                <div class="team-title">RED TEAM</div>
+                <div id="red-slots">
+                    <!-- 포지션 슬롯 5개 -->
+                </div>
+            </div>
+            <div class="team-box team-blue">
+                <div class="team-title">BLUE TEAM</div>
+                <div id="blue-slots">
+                    <!-- 포지션 슬롯 5개 -->
+                </div>
+            </div>
+        </div>
+
+        <div class="spin-controls">
+            <div id="result-display"></div>
+            <div id="team-spin-label" class="team-indicator">READY</div>
+            <button id="spin-btn">Spin</button>
+            <div class="wheels-wrapper">
+                <div class="wheel-container" id="user-wheel-container">
+                    <div class="wheel-pointer"></div>
+                    <div class="wheel-inner" id="user-wheel"></div>
+                </div>
+                <div class="wheel-container" id="pos-wheel-container">
+                    <div class="wheel-pointer"></div>
+                    <div class="wheel-inner" id="pos-wheel"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const userList = [
+            "한세긴", "나비", "송밤", "크앙희", "다니얀", 
+            "밤베", "밤새나", "요코링", "윰로로", "찌로", 
+            "프하", "호발", "공도리", "소호", "한세현"
+        ];
+
+        const positions = ["top", "jungle", "mid", "bottom", "support"];
+        let activeUserIndices = new Set();
+        let isSpinning = false;
+        let animationId = null;
+        
+        // 상태 플래그
+        let spinState = {
+            team: false,
+            user: false,
+            pos: false
+        };
+
+        // 결과 저장용
+        let redTeam = { top: null, jungle: null, mid: null, bottom: null, support: null };
+        let blueTeam = { top: null, jungle: null, mid: null, bottom: null, support: null };
+        let assignedUsers = new Set();
+
+        const userGrid = document.getElementById('user-grid');
+        const confirmBtn = document.getElementById('confirm-btn');
+        const userSelection = document.getElementById('user-selection');
+        const rouletteContainer = document.getElementById('roulette-container');
+        const spinBtn = document.getElementById('spin-btn');
+        const teamSpinLabel = document.getElementById('team-spin-label');
+        const resultDisplay = document.getElementById('result-display');
+        const titleContainer = document.getElementById('title-container');
+        const resetBtn = document.getElementById('reset-btn');
+        
+        const userWheel = document.getElementById('user-wheel');
+        const posWheel = document.getElementById('pos-wheel');
+
+        // 초기화
+        function init() {
+            userList.forEach((name, index) => {
+                const item = document.createElement('div');
+                item.className = 'user-item';
+                item.innerHTML = `
+                    <div class="user-icon">${name[0]}</div>
+                    <div class="user-name">${name}</div>
+                `;
+                item.onclick = () => toggleUser(index, item);
+                userGrid.appendChild(item);
+            });
+
+            // 슬롯 초기화
+            renderSlots();
+        }
+
+        function toggleUser(index, element) {
+            if (activeUserIndices.has(index)) {
+                activeUserIndices.delete(index);
+                element.classList.remove('active');
+            } else {
+                activeUserIndices.add(index);
+                element.classList.add('active');
+            }
+
+            if (activeUserIndices.size >= 10) {
+                confirmBtn.classList.add('enabled');
+            } else {
+                confirmBtn.classList.remove('enabled');
+            }
+        }
+
+        confirmBtn.onclick = () => {
+            if (activeUserIndices.size < 10) return;
+            userSelection.style.display = 'none';
+            titleContainer.style.display = 'none'; // 타이틀 숨김
+            rouletteContainer.style.display = 'flex';
+            setupWheels();
+        };
+
+        resetBtn.onclick = () => {
+            if (confirm("처음으로 돌아가시겠습니까?")) {
+                location.reload();
+            }
+        };
+
+        function renderSlots() {
+            const redSlots = document.getElementById('red-slots');
+            const blueSlots = document.getElementById('blue-slots');
+            redSlots.innerHTML = '';
+            blueSlots.innerHTML = '';
+
+            positions.forEach(pos => {
+                redSlots.innerHTML += createSlotHtml('red', pos);
+                blueSlots.innerHTML += createSlotHtml('blue', pos);
+            });
+        }
+
+        function createSlotHtml(team, pos) {
+            const userName = (team === 'red' ? redTeam[pos] : blueTeam[pos]) || '';
+            return `
+                <div class="position-slot">
+                    <div class="pos-icon" style="background-image: url('./assets/${pos}.png')"></div>
+                    <div class="slot-name">${pos.toUpperCase()}: ${userName}</div>
+                </div>
+            `;
+        }
+
+        function setupWheels() {
+            // 유저 휠 구성
+            const activeUsers = Array.from(activeUserIndices).map(i => userList[i]);
+            setupWheelContent(userWheel, activeUsers);
+            
+            // 포지션 휠 구성
+            setupWheelContent(posWheel, positions, true);
+        }
+
+        function setupWheelContent(wheelEl, items, isPos = false) {
+            wheelEl.innerHTML = '';
+            const count = items.length;
+            const angle = 360 / count;
+            
+            items.forEach((item, i) => {
+                const segment = document.createElement('div');
+                segment.className = 'wheel-segment';
+                segment.style.transform = `rotate(${i * angle}deg)`;
+                
+                if (isPos) {
+                    segment.innerHTML = `<img src="./assets/${item}.png" class="pos-img" alt="${item}">`;
+                } else {
+                    segment.innerHTML = `<div class="wheel-label">${item}</div>`;
+                }
+
+                // 경계선 추가 (다음 칸과의 경계)
+                const divider = document.createElement('div');
+                divider.className = 'wheel-divider';
+                divider.style.transform = `rotate(${angle / 2}deg)`;
+                segment.appendChild(divider);
+                
+                wheelEl.appendChild(segment);
+            });
+        }
+
+        let currentRotationUser = 0;
+        let currentRotationPos = 0;
+
+        spinBtn.onclick = () => {
+            if (!isSpinning) {
+                // 검사: 더 이상 할당할 포지션이 있는지
+                const availableRed = positions.filter(p => !redTeam[p]);
+                const availableBlue = positions.filter(p => !blueTeam[p]);
+                if (availableRed.length === 0 && availableBlue.length === 0) {
+                    alert("모든 포지션이 결정되었습니다!");
+                    return;
+                }
+
+                startSpin();
+            } else {
+                stopSpin();
+            }
+        };
+
+        function startSpin() {
+            isSpinning = true;
+            spinState = { team: true, user: true, pos: true };
+            
+            spinBtn.innerText = 'Stop';
+            spinBtn.classList.add('stopping');
+            
+            // 텍스트 초기화
+            resultDisplay.innerText = '';
+            
+            // 초기화: transition 제거 (애니메이션 루프 제어)
+            userWheel.style.transition = 'none';
+            posWheel.style.transition = 'none';
+
+            const rotate = () => {
+                // 유저 휠 회전
+                if (spinState.user) {
+                    currentRotationUser += 10;
+                    userWheel.style.transform = `rotate(-${currentRotationUser}deg)`;
+                }
+                
+                // 포지션 휠 회전
+                if (spinState.pos) {
+                    currentRotationPos += 12;
+                    posWheel.style.transform = `rotate(-${currentRotationPos}deg)`;
+                }
+                
+                // 팀 레이블 랜덤 깜빡임
+                if (spinState.team) {
+                    teamSpinLabel.innerText = Math.random() > 0.5 ? 'RED' : 'BLUE';
+                    teamSpinLabel.style.color = teamSpinLabel.innerText === 'RED' ? 'var(--red-color)' : 'var(--blue-color)';
+                }
+                
+                if (isSpinning || spinState.user || spinState.pos) {
+                    animationId = requestAnimationFrame(rotate);
+                }
+            };
+            rotate();
+        }
+
+        function stopSpin() {
+            isSpinning = false; // 버튼 상태 변경용
+            spinBtn.innerText = 'Spin';
+            spinBtn.classList.remove('stopping');
+
+            // 딜레이 설정 값 가져오기
+            const rootStyle = getComputedStyle(document.documentElement);
+            const delayTeam = parseInt(rootStyle.getPropertyValue('--delay-team').trim()) || 0;
+            const delayUser = parseInt(rootStyle.getPropertyValue('--delay-user').trim()) || 1000;
+            const delayPos = parseInt(rootStyle.getPropertyValue('--delay-position').trim()) || 2000;
+
+            // 결과 미리 결정
+            const activeUsers = Array.from(activeUserIndices).map(i => userList[i])
+                .filter(u => !assignedUsers.has(u));
+            
+            if (activeUsers.length === 0) {
+                alert("남은 유저가 없습니다.");
+                cancelAnimationFrame(animationId);
+                return;
+            }
+
+            // 1. 팀 결정
+            const availableRed = positions.filter(p => !redTeam[p]);
+            const availableBlue = positions.filter(p => !blueTeam[p]);
+            
+            let team;
+            if (availableRed.length > 0 && availableBlue.length > 0) {
+                team = Math.random() > 0.5 ? 'red' : 'blue';
+            } else if (availableRed.length > 0) {
+                team = 'red';
+            } else {
+                team = 'blue';
+            }
+
+            // 2. 유저 결정
+            const userIndex = Math.floor(Math.random() * activeUsers.length);
+            const selectedUser = activeUsers[userIndex];
+
+            // 3. 포지션 결정
+            const teamAvailablePos = team === 'red' ? availableRed : availableBlue;
+            const posIndex = Math.floor(Math.random() * teamAvailablePos.length);
+            const selectedPos = teamAvailablePos[posIndex];
+
+            // --- 1. Team Stop ---
+            setTimeout(() => {
+                spinState.team = false;
+                teamSpinLabel.innerText = team.toUpperCase();
+                teamSpinLabel.style.color = team === 'red' ? 'var(--red-color)' : 'var(--blue-color)';
+            }, delayTeam);
+
+            // --- 2. User Wheel Stop ---
+            setTimeout(() => {
+                spinState.user = false;
+                
+                const activeAllUsers = Array.from(activeUserIndices).map(i => userList[i]);
+                const userWheelIndex = activeAllUsers.indexOf(selectedUser);
+                const userAngle = (360 / activeAllUsers.length) * userWheelIndex;
+                
+                // 자연스러운 정지 각도 계산
+                currentRotationUser = Math.ceil(currentRotationUser / 360) * 360 + userAngle;
+                
+                userWheel.style.transition = 'transform 1.5s cubic-bezier(0.1, 0, 0.1, 1)';
+                userWheel.style.transform = `rotate(-${currentRotationUser}deg)`;
+            }, delayUser);
+
+            // --- 3. Position Wheel Stop ---
+            setTimeout(() => {
+                spinState.pos = false;
+
+                const posWheelIndex = positions.indexOf(selectedPos);
+                const posAngle = (360 / positions.length) * posWheelIndex;
+
+                currentRotationPos = Math.ceil(currentRotationPos / 360) * 360 + posAngle;
+
+                posWheel.style.transition = 'transform 1.5s cubic-bezier(0.1, 0, 0.1, 1)';
+                posWheel.style.transform = `rotate(-${currentRotationPos}deg)`;
+            }, delayPos);
+
+            // --- Final Update ---
+            // 가장 긴 딜레이 + 애니메이션 시간(1.5s) 후 반영
+            const maxDelay = Math.max(delayTeam, delayUser, delayPos);
+            setTimeout(() => {
+                if (team === 'red') redTeam[selectedPos] = selectedUser;
+                else blueTeam[selectedPos] = selectedUser;
+                assignedUsers.add(selectedUser);
+                renderSlots();
+
+                // 결과 텍스트 노출
+                resultDisplay.innerText = `${selectedUser} - ${team.toUpperCase()} - ${selectedPos.toUpperCase()}`;
+                resultDisplay.style.color = team === 'red' ? 'var(--red-color)' : 'var(--blue-color)';
+            }, maxDelay + 1500);
+        }
+
+        init();
+    </script>
+</body>
+</html>
