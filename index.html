@@ -230,11 +230,11 @@
             border: 1px solid #555;
         }
 
-        /* STEP 2: 룰렛 화면 */
+        /* STEP 2: 룰렛 화면 (슬롯머신 스타일) */
         #roulette-container {
             display: none;
             width: 100%;
-            max-width: 1000px;
+            max-width: 1200px; /* 좀 더 넓게 */
             flex-direction: column;
             align-items: center;
         }
@@ -281,6 +281,13 @@
         
         .position-slot:hover {
             background: rgba(255, 255, 255, 0.1);
+        }
+
+        /* 스핀 중 클릭 방지 */
+        .slots-locked .position-slot {
+            pointer-events: none;
+            cursor: not-allowed;
+            opacity: 0.7;
         }
 
         .pos-icon {
@@ -350,6 +357,7 @@
             align-items: center;
             gap: 20px;
             margin-bottom: 40px;
+            width: 100%;
         }
 
         #spin-btn {
@@ -361,6 +369,7 @@
             cursor: pointer;
             font-weight: bold;
             box-shadow: 0 4px 15px rgba(240, 208, 40, 0.3);
+            margin-top: 20px;
         }
 
         #spin-btn.stopping {
@@ -375,84 +384,100 @@
             box-shadow: none;
         }
 
-        .team-indicator {
-            font-size: 2rem;
+        #remaining-users-container {
+            margin-top: 20px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .remaining-title {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-bottom: 10px;
+        }
+
+        #remaining-count {
+            color: #f0d028;
             font-weight: bold;
-            height: 50px;
+        }
+
+        #remaining-list {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .remaining-user-tag {
+            background-color: #333;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        /* Slot Machine Styles */
+        .slot-machine-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background: #222;
+            border-radius: 15px;
+            border: 5px solid #444;
+            box-shadow: inset 0 0 20px #000;
+            position: relative;
+        }
+
+        .slot-window {
+            width: 200px;
+            height: 120px; /* Visible height */
+            overflow: hidden;
+            background: #111;
+            border: 2px solid #555;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .slot-reel {
+            display: flex;
+            flex-direction: column;
+            will-change: transform;
+            /* Will be animated via transform */
+        }
+
+        .slot-item {
+            height: 120px; /* Same as window height for single item view */
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        .wheels-wrapper {
-            display: flex;
-            gap: 50px;
-            perspective: 1000px;
-        }
-
-        .wheel-container {
-            width: var(--wheel-size);
-            height: var(--wheel-size);
-            border: 5px solid #555;
-            border-radius: 50%;
-            position: relative;
-            overflow: hidden;
-            background: #222;
-        }
-
-        .wheel-inner {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            transition: transform cubic-bezier(0.1, 0, 0.1, 1);
-        }
-
-        .wheel-segment {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: flex-start;
-            justify-content: center;
-            padding-top: 25px; /* 중앙에서 좀 더 떨어지게 조정 */
-            box-sizing: border-box;
-            transform-origin: 50% 50%;
-        }
-
-        .wheel-label {
-            transform: rotate(0deg);
+            font-size: 1.5rem;
             font-weight: bold;
-            font-size: var(--user-font-size-wheel);
-            white-space: nowrap;
+            color: #fff;
+            box-sizing: border-box;
+            border-bottom: 1px solid #333;
+        }
+        
+        .slot-item img {
+            height: 80px;
+            width: auto;
         }
 
-        .pos-img {
-            width: var(--pos-icon-size-wheel);
-            height: var(--pos-icon-size-wheel);
+        .slot-label {
+            text-align: center;
         }
 
-        .wheel-divider {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 2px;
-            height: 50%;
-            background-color: var(--wheel-border-color);
-            transform-origin: bottom center;
-            z-index: 1;
+        .slot-header {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #888;
+            margin-bottom: 5px;
         }
 
-        .wheel-pointer {
-            position: absolute;
-            top: -10px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 15px solid transparent;
-            border-right: 15px solid transparent;
-            border-top: 25px solid #f0d028;
-            z-index: 10;
+        .slot-column {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         #reset-btn {
@@ -469,19 +494,6 @@
 
         #reset-btn:hover {
             background-color: #777;
-        }
-
-        .pos-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .pos-text {
-            margin-top: 5px;
-            font-size: 1rem;
-            font-weight: bold;
-            color: #fff;
         }
     </style>
 </head>
@@ -555,18 +567,34 @@
         </div>
 
         <div class="spin-controls">
-            <div id="result-display"></div>
-            <div id="team-spin-label" class="team-indicator">READY</div>
+            <div class="slot-machine-container">
+                <div class="slot-column">
+                    <div class="slot-header">PLAYER</div>
+                    <div class="slot-window">
+                        <div class="slot-reel" id="reel-user"></div>
+                    </div>
+                </div>
+                
+                <div class="slot-column">
+                    <div class="slot-header">TEAM</div>
+                    <div class="slot-window">
+                        <div class="slot-reel" id="reel-team"></div>
+                    </div>
+                </div>
+
+                <div class="slot-column">
+                    <div class="slot-header">POSITION</div>
+                    <div class="slot-window">
+                        <div class="slot-reel" id="reel-pos"></div>
+                    </div>
+                </div>
+            </div>
+            
             <button id="spin-btn">Spin</button>
-            <div class="wheels-wrapper">
-                <div class="wheel-container" id="user-wheel-container">
-                    <div class="wheel-pointer"></div>
-                    <div class="wheel-inner" id="user-wheel"></div>
-                </div>
-                <div class="wheel-container" id="pos-wheel-container">
-                    <div class="wheel-pointer"></div>
-                    <div class="wheel-inner" id="pos-wheel"></div>
-                </div>
+            
+            <div id="remaining-users-container">
+                <div class="remaining-title">남은 인원: <span id="remaining-count">0</span>명</div>
+                <div id="remaining-list"></div>
             </div>
         </div>
     </div>
@@ -623,11 +651,14 @@
         const titleContainer = document.getElementById('title-container');
         const resetBtn = document.getElementById('reset-btn');
         const spinBtn = document.getElementById('spin-btn');
-        const resultDisplay = document.getElementById('result-display');
-        const teamSpinLabel = document.getElementById('team-spin-label');
-        const userWheel = document.getElementById('user-wheel');
-        const posWheel = document.getElementById('pos-wheel');
-
+        const remainingCountEl = document.getElementById('remaining-count');
+        const remainingListEl = document.getElementById('remaining-list');
+        
+        // Slot Elements
+        const reelUser = document.getElementById('reel-user');
+        const reelTeam = document.getElementById('reel-team');
+        const reelPos = document.getElementById('reel-pos');
+        
         // 커스텀 유저 아이콘 SVG
         const customUserSvg = `
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="#e3e3e3">
@@ -752,8 +783,8 @@
         }
 
         function checkConfirmButton() {
-            // Assuming at least 1 person needed, typically 10 for 5v5 but allowing flexibility
-            if (getSelectedUserNames().length > 0) {
+            // 10 users required for 5v5
+            if (getSelectedUserNames().length >= 10) {
                 confirmBtn.classList.add('enabled');
             } else {
                 confirmBtn.classList.remove('enabled');
@@ -766,7 +797,8 @@
             titleContainer.style.display = 'none';
             rouletteContainer.style.display = 'flex';
             
-            setupWheels();
+            setupSlots();
+            renderSlots(); // Update remaining users list immediately
         };
 
         resetBtn.onclick = () => {
@@ -776,7 +808,6 @@
                 redTeam = { top: null, jungle: null, mid: null, bottom: null, support: null };
                 blueTeam = { top: null, jungle: null, mid: null, bottom: null, support: null };
                 renderSlots();
-                resultDisplay.innerText = '';
                 
                 // Show selection screen
                 rouletteContainer.style.display = 'none';
@@ -787,7 +818,7 @@
             }
         };
 
-        // --- Roulette & Logic ---
+        // --- Roulette & Logic (Slot Machine) ---
 
         function renderSlots() {
             const redSlots = document.getElementById('red-slots');
@@ -798,6 +829,26 @@
             positions.forEach(pos => {
                 redSlots.appendChild(createSlotElement('red', pos));
                 blueSlots.appendChild(createSlotElement('blue', pos));
+            });
+            
+            updateRemainingUsers();
+        }
+
+        function updateRemainingUsers() {
+            if (!remainingCountEl || !remainingListEl) return;
+            
+            const allSelected = getSelectedUserNames();
+            // Filter out users who are currently assigned to any slot
+            const availableUsers = allSelected.filter(u => !assignedUsers.has(u));
+            
+            remainingCountEl.innerText = availableUsers.length;
+            remainingListEl.innerHTML = '';
+            
+            availableUsers.forEach(user => {
+                const tag = document.createElement('div');
+                tag.className = 'remaining-user-tag';
+                tag.innerText = user;
+                remainingListEl.appendChild(tag);
             });
         }
 
@@ -907,54 +958,62 @@
             renderSlots();
         }
 
-        function setupWheels() {
+        // Slot Machine State
+        const slotHeight = 120; // Matches CSS .slot-item height
+        let slotAnimationIds = {};
+        let slotOffsets = { user: 0, team: 0, pos: 0 };
+        let slotSpeeds = { user: 0, team: 0, pos: 0 };
+        const MAX_SPEED = 40; // Max pixels per frame
+        
+        function setupSlots() {
             const allSelected = getSelectedUserNames();
-            // Show only unassigned users in the wheel? 
-            // Or show all but spin logic handles exclusion?
-            // Usually visual feedback is nice, but keeping the wheel full looks better.
-            // Let's keep all selected users in the wheel for visuals, but logic will filter.
-            setupWheelContent(userWheel, allSelected);
-            setupWheelContent(posWheel, positions, true);
-        }
-
-        function setupWheelContent(wheelEl, items, isPos = false) {
-            wheelEl.innerHTML = '';
-            const count = items.length;
-            if (count === 0) return;
-
-            const angle = 360 / count;
+            // Populate reels
             
-            items.forEach((item, i) => {
-                const segment = document.createElement('div');
-                segment.className = 'wheel-segment';
-                segment.style.transform = `rotate(${i * angle}deg)`;
-                
-                if (isPos) {
-                    segment.innerHTML = `
-                        <div class="pos-wrapper">
-                            <img src="./assets/${item}.png" class="pos-img" alt="${item}">
-                            <div class="pos-text">${positionNames[item]}</div>
-                        </div>
-                    `;
-                } else {
-                    segment.innerHTML = `<div class="wheel-label">${item}</div>`;
-                }
-
-                const divider = document.createElement('div');
-                divider.className = 'wheel-divider';
-                divider.style.transform = `rotate(${angle / 2}deg)`;
-                segment.appendChild(divider);
-                
-                wheelEl.appendChild(segment);
-            });
+            // 1. User Reel
+            populateReel(reelUser, allSelected, 'user');
+            
+            // 2. Team Reel
+            populateReel(reelTeam, ['RED', 'BLUE'], 'team');
+            
+            // 3. Pos Reel
+            populateReel(reelPos, positions, 'pos');
         }
-
-        let currentRotationUser = 0;
-        let currentRotationPos = 0;
+        
+        function populateReel(reelEl, items, type) {
+            reelEl.innerHTML = '';
+            // Duplicate list MANY times to allow smooth long spins and stops
+            // 50 iterations * 5 items = 250 items. 250 * 120px = 30,000px. Enough.
+            
+            let content = [];
+            for(let i=0; i<50; i++) {
+                content = content.concat(items);
+            }
+            
+            content.forEach(item => {
+                const el = document.createElement('div');
+                el.className = 'slot-item';
+                
+                if (type === 'pos') {
+                    el.innerHTML = `<img src="./assets/${item}.png" alt="${item}"><div class="slot-label">${positionNames[item]}</div>`;
+                } else if (type === 'team') {
+                     el.innerHTML = `<div style="color: ${item === 'RED' ? 'var(--red-color)' : 'var(--blue-color)'}">${item}</div>`;
+                } else {
+                    el.innerText = item;
+                }
+                
+                reelEl.appendChild(el);
+            });
+            
+            // For downward movement, we start in the middle of the reel
+            const halfHeight = (reelEl.scrollHeight / 2);
+            reelEl.style.transform = `translateY(-${halfHeight}px)`;
+            reelEl.style.transition = 'none';
+            slotOffsets[type] = halfHeight;
+        }
 
         spinBtn.onclick = () => {
             if (!isSpinning) {
-                // Pre-check for available slots and users
+                // Pre-check
                 const availableRed = positions.filter(p => !redTeam[p]);
                 const availableBlue = positions.filter(p => !blueTeam[p]);
                 
@@ -979,49 +1038,66 @@
 
         function startSpin() {
             isSpinning = true;
-            spinState = { team: true, user: true, pos: true };
-            
             spinBtn.innerText = 'Stop';
             spinBtn.classList.add('stopping');
-            resultDisplay.innerText = '';
+            spinBtn.disabled = true; // Temporary disable to prevent rapid clicks
+            setTimeout(() => spinBtn.disabled = false, 500);
             
-            userWheel.style.transition = 'none';
-            posWheel.style.transition = 'none';
+            // 포지션 슬롯 클릭 잠금
+            document.getElementById('red-slots').classList.add('slots-locked');
+            document.getElementById('blue-slots').classList.add('slots-locked');
 
-            const rotate = () => {
-                if (spinState.user) {
-                    currentRotationUser += 10;
-                    userWheel.style.transform = `rotate(-${currentRotationUser}deg)`;
-                }
-                if (spinState.pos) {
-                    currentRotationPos += 12;
-                    posWheel.style.transform = `rotate(-${currentRotationPos}deg)`;
-                }
-                if (spinState.team) {
-                    teamSpinLabel.innerText = Math.random() > 0.5 ? 'RED' : 'BLUE';
-                    teamSpinLabel.style.color = teamSpinLabel.innerText === 'RED' ? 'var(--red-color)' : 'var(--blue-color)';
-                }
+            // Reset transitions
+            [reelUser, reelTeam, reelPos].forEach(el => el.style.transition = 'none');
+            
+            // Reset speeds
+            slotSpeeds = { user: 0, team: 0, pos: 0 };
+            
+            const animate = (type, reelEl) => {
+                const totalHeight = reelEl.scrollHeight;
+                const halfHeight = totalHeight / 2;
+                // Buffer height: Reset loop when we have this much space left at the top.
+                // 50 copies * 5 items * 120px = 30000px. halfHeight = 15000px.
+                // We want to ensure we always have at least ~3000px (25 items) above us to scroll into during stop.
+                const BUFFER_HEIGHT = 3000; 
                 
-                if (isSpinning || spinState.user || spinState.pos) {
-                    animationId = requestAnimationFrame(rotate);
-                }
+                const step = () => {
+                    if (!isSpinning && slotSpeeds[type] === 0) return; // Stopped
+
+                    // Acceleration
+                    if (slotSpeeds[type] < MAX_SPEED) {
+                        slotSpeeds[type] += 1; // Ramp up
+                    }
+
+                    // Move DOWN: decrease offset
+                    slotOffsets[type] -= slotSpeeds[type];
+                    
+                    // Loop logic: if we pass the buffer point, jump back to lower half
+                    // We jump by exactly halfHeight (seamless)
+                    if (slotOffsets[type] <= BUFFER_HEIGHT) {
+                        slotOffsets[type] += halfHeight;
+                    }
+                    
+                    reelEl.style.transform = `translateY(-${slotOffsets[type]}px)`;
+                    
+                    if (isSpinning || slotSpeeds[type] > 0) {
+                        slotAnimationIds[type] = requestAnimationFrame(step);
+                    }
+                };
+                step();
             };
-            rotate();
+
+            animate('user', reelUser);
+            animate('team', reelTeam);
+            animate('pos', reelPos);
         }
 
         function stopSpin() {
-            isSpinning = false;
-            spinBtn.innerText = 'Spin';
-            spinBtn.classList.remove('stopping');
+            isSpinning = false; // Logic flag
             spinBtn.disabled = true;
+            spinBtn.innerText = 'Spinning...';
 
-            const rootStyle = getComputedStyle(document.documentElement);
-            const delayTeam = parseInt(rootStyle.getPropertyValue('--delay-team').trim()) || 500;
-            const delayUser = parseInt(rootStyle.getPropertyValue('--delay-user').trim()) || 2000;
-            const delayPos = parseInt(rootStyle.getPropertyValue('--delay-position').trim()) || 4000;
-            const delayNextSpin = parseInt(rootStyle.getPropertyValue('--delay-next-spin').trim()) || 2000;
-
-            // Logic: Pick Team -> Pick available Pos -> Pick available User
+            // Determine Result
             const availableRed = positions.filter(p => !redTeam[p]);
             const availableBlue = positions.filter(p => !blueTeam[p]);
             
@@ -1035,61 +1111,79 @@
             }
 
             const teamAvailablePos = team === 'red' ? availableRed : availableBlue;
-            const posIndex = Math.floor(Math.random() * teamAvailablePos.length);
-            const selectedPos = teamAvailablePos[posIndex];
+            const selectedPos = teamAvailablePos[Math.floor(Math.random() * teamAvailablePos.length)];
 
             const allSelected = getSelectedUserNames();
             const availableUsers = allSelected.filter(u => !assignedUsers.has(u));
-            const userIndex = Math.floor(Math.random() * availableUsers.length);
-            const selectedUser = availableUsers[userIndex];
+            const selectedUser = availableUsers[Math.floor(Math.random() * availableUsers.length)];
 
-            // 1. Team Stop
-            setTimeout(() => {
-                spinState.team = false;
-                teamSpinLabel.innerText = team.toUpperCase();
-                teamSpinLabel.style.color = team === 'red' ? 'var(--red-color)' : 'var(--blue-color)';
-            }, delayTeam);
+            // Helper to stop a reel
+            const stopReel = (type, targetItem, itemsList, delay) => {
+                setTimeout(() => {
+                    cancelAnimationFrame(slotAnimationIds[type]);
+                    
+                    const reelEl = (type === 'user' ? reelUser : (type === 'team' ? reelTeam : reelPos));
+                    
+                    let currentOffset = slotOffsets[type];
+                    const itemsLength = itemsList.length;
+                    const targetBaseIndex = itemsList.indexOf(targetItem);
+                    
+                    // Moving DOWN means finalOffset < currentOffset
+                    const currentIndex = currentOffset / slotHeight;
+                    // We want to land at least 15 items "earlier" (scrolling down visually)
+                    // Using floor ensures we snap to grid
+                    let targetIndex = Math.floor(currentIndex) - 15;
+                    
+                    // Adjust to match the correct item
+                    // targetIndex might be e.g. 100.
+                    // 100 % length should be targetBaseIndex
+                    let remainder = targetIndex % itemsLength;
+                    // JS modulo of negative numbers is negative. e.g. -13 % 10 = -3.
+                    if (remainder < 0) remainder += itemsLength;
 
-            // 2. User Stop (Align with wheel)
-            setTimeout(() => {
-                spinState.user = false;
-                
-                // Calculate angle for visual alignment
-                // Note: The wheel contains ALL selected users.
-                // We need to find the index of the selectedUser in the WHEEL list.
-                const wheelUserIndex = allSelected.indexOf(selectedUser);
-                const userAngle = (360 / allSelected.length) * wheelUserIndex;
-                
-                currentRotationUser = Math.ceil(currentRotationUser / 360) * 360 + userAngle;
-                userWheel.style.transition = 'transform 1.5s cubic-bezier(0.1, 0, 0.1, 1)';
-                userWheel.style.transform = `rotate(-${currentRotationUser}deg)`;
-            }, delayUser);
+                    let diff = remainder - targetBaseIndex;
+                    if (diff < 0) diff += itemsLength;
+                    
+                    targetIndex -= diff;
+                    
+                    // Calculate final pixel offset
+                    const finalOffset = targetIndex * slotHeight;
+                    
+                    reelEl.style.transition = 'transform 2.5s cubic-bezier(0.1, 0, 0.1, 1)';
+                    reelEl.style.transform = `translateY(-${finalOffset}px)`;
+                    
+                    slotOffsets[type] = finalOffset;
 
-            // 3. Position Stop
-            setTimeout(() => {
-                spinState.pos = false;
-                const posWheelIndex = positions.indexOf(selectedPos);
-                const posAngle = (360 / positions.length) * posWheelIndex;
-                currentRotationPos = Math.ceil(currentRotationPos / 360) * 360 + posAngle;
-                posWheel.style.transition = 'transform 1.5s cubic-bezier(0.1, 0, 0.1, 1)';
-                posWheel.style.transform = `rotate(-${currentRotationPos}deg)`;
-            }, delayPos);
+                }, delay);
+            };
+            
+            // Delays for sequence: Name -> Team -> Pos
+            const delayUser = 0;
+            const delayTeam = 1500;
+            const delayPos = 3000;
+            const finishDelay = 6000;
 
-            // 4. Finalize
-            const maxDelay = Math.max(delayTeam, delayUser, delayPos);
+            stopReel('user', selectedUser, allSelected, delayUser);
+            stopReel('team', team.toUpperCase(), ['RED', 'BLUE'], delayTeam);
+            stopReel('pos', selectedPos, positions, delayPos);
+            
+            // Finalize
             setTimeout(() => {
                 if (team === 'red') redTeam[selectedPos] = selectedUser;
                 else blueTeam[selectedPos] = selectedUser;
                 assignedUsers.add(selectedUser);
                 
-                renderSlots();
-                resultDisplay.innerText = `${selectedUser} - ${team.toUpperCase()} - ${selectedPos.toUpperCase()}`;
-                resultDisplay.style.color = team === 'red' ? 'var(--red-color)' : 'var(--blue-color)';
-            }, maxDelay + 1500);
+                // 포지션 슬롯 클릭 잠금 해제
+                document.getElementById('red-slots').classList.remove('slots-locked');
+                document.getElementById('blue-slots').classList.remove('slots-locked');
 
-            setTimeout(() => {
+                renderSlots();
+                
+                spinBtn.innerText = 'Spin';
+                spinBtn.classList.remove('stopping');
                 spinBtn.disabled = false;
-            }, maxDelay + 1500 + delayNextSpin);
+                
+            }, finishDelay);
         }
 
         init();
