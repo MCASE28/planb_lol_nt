@@ -11,7 +11,6 @@
             --user-icon-height: 80px;
             --title-img-width: 300px;
             --title-img-height: auto;
-            --roulette-speed: 10s; /* 1바퀴 도는 시간 (사용자 정의) */
             
             /* 휠 및 아이콘 크기 설정 */
             --wheel-size: 350px;           /* 룰렛 전체 크기 */
@@ -65,6 +64,17 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .selection-container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-start;
+            flex-wrap: wrap;
         }
 
         .user-grid {
@@ -77,41 +87,116 @@
         .user-item {
             width: var(--user-icon-width);
             text-align: center;
-            cursor: pointer;
-            transition: transform 0.2s;
-            opacity: 0.5;
             border: 2px solid transparent;
             padding: 5px;
             border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* Preset User Item only - Clickable Wrapper */
+        .user-item.preset {
+            cursor: pointer;
+            transition: transform 0.2s;
+            opacity: 0.5;
         }
 
-        .user-item.active {
+        .user-item.preset.active {
             opacity: 1;
             border-color: #f0d028;
             background-color: rgba(240, 208, 40, 0.1);
         }
 
-        .user-item:hover {
+        .user-item.preset:hover {
+            transform: scale(1.05);
+        }
+
+        /* Custom User Item */
+        .user-item.custom {
+            opacity: 1; /* Always visible, activity toggled via icon */
+        }
+        
+        .user-item.custom .user-icon {
+            cursor: pointer;
+            opacity: 0.3;
+            transition: opacity 0.2s, transform 0.2s;
+            fill: #e3e3e3; /* SVG fill */
+        }
+
+        .user-item.custom.active {
+            border-color: #f0d028;
+            background-color: rgba(240, 208, 40, 0.1);
+        }
+
+        .user-item.custom.active .user-icon {
+            opacity: 1;
             transform: scale(1.05);
         }
 
         .user-icon {
-            width: 100%;
+            width: var(--user-icon-height);
             height: var(--user-icon-height);
-            background-color: #333;
-            border-radius: 50%;
+            border-radius: 50%; /* Make circular */
+            overflow: hidden;   /* Clip content to circle */
             margin-bottom: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 1.2rem;
-            color: #aaa;
+            background-color: #333;
         }
 
-        .user-item.active .user-icon {
+        .user-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .user-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        .custom-name-input {
+            width: 100%;
+            background: transparent;
+            border: 1px solid #555;
             color: #fff;
+            text-align: center;
+            padding: 2px;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+        
+        .custom-name-input:focus {
+            outline: none;
+            border-color: #f0d028;
+            background: #333;
+        }
+
+        .divider {
+            width: 2px;
             background-color: #555;
+            align-self: stretch;
+            margin: 0 10px;
+        }
+
+        .controls-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+            width: 100%;
         }
 
         #confirm-btn {
@@ -129,6 +214,20 @@
             color: #000;
             cursor: pointer;
             font-weight: bold;
+        }
+
+        .custom-setting-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        #custom-count-select {
+            padding: 5px 10px;
+            border-radius: 5px;
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
         }
 
         /* STEP 2: 룰렛 화면 */
@@ -175,15 +274,74 @@
             padding: 5px;
             background: rgba(255, 255, 255, 0.05);
             border-radius: 4px;
-            height: 40px;
+            height: 50px;
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .position-slot:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
         .pos-icon {
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
             margin-right: 10px;
             background-size: contain;
             background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .slot-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex-grow: 1;
+        }
+        
+        .slot-pos-name {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+        
+        .slot-user-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            height: 1.5em; /* Min height to maintain layout */
+        }
+
+        /* Dropdown for manual assignment */
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #333;
+            border: 1px solid #555;
+            border-radius: 0 0 5px 5px;
+            z-index: 100;
+            display: none;
+        }
+        
+        .user-dropdown.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            padding: 8px 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #444;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #555;
+        }
+        
+        .dropdown-item.clear {
+            color: #ff8888;
+            font-style: italic;
         }
 
         .spin-controls {
@@ -284,8 +442,6 @@
             z-index: 1;
         }
 
-
-
         .wheel-pointer {
             position: absolute;
             top: -10px;
@@ -337,10 +493,41 @@
 
     <!-- STEP 1: 유저 선택 -->
     <div id="user-selection">
-        <div class="user-grid" id="user-grid">
-            <!-- 유저 아이콘들이 동적으로 생성됨 -->
+        <div class="selection-container">
+            <!-- Preset Users -->
+            <div class="user-grid" id="preset-user-grid">
+                <!-- 동적 생성 -->
+            </div>
+
+            <!-- Divider (Hidden by default) -->
+            <div class="divider" id="custom-divider" style="display: none;"></div>
+
+            <!-- Custom Users (Hidden by default) -->
+            <div class="user-grid" id="custom-user-grid" style="display: none;">
+                <!-- 동적 생성 -->
+            </div>
         </div>
-        <button id="confirm-btn">확인</button>
+
+        <div class="controls-area">
+            <button id="confirm-btn">확인</button>
+            
+            <div class="custom-setting-area">
+                <label for="custom-count-select">커스텀 인원 추가</label>
+                <select id="custom-count-select">
+                    <option value="0" selected>0</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                </select>
+            </div>
+        </div>
     </div>
 
     <!-- STEP 2: 룰렛 -->
@@ -380,10 +567,23 @@
     </div>
 
     <script>
-        const userList = [
-            "한세긴", "나비", "송밤", "크앙희", "다니얀", 
-            "밤베", "밤새나", "요코링", "윰로로", "찌로", 
-            "프하", "호발", "공도리", "소호", "한세현"
+        // 데이터 정의
+        const presetUsersData = [
+            { name: "한세긴", id: "rose0957" },
+            { name: "나비", id: "navixx" },
+            { name: "송밤", id: "s07o24" },
+            { name: "크앙희", id: "9wang2" },
+            { name: "다니얀", id: "daniyan1030" },
+            { name: "밤베", id: "bambe53" },
+            { name: "밤새나", id: "bamsaena" },
+            { name: "요코링", id: "yokoring03" },
+            { name: "윰로로", id: "yumroro" },
+            { name: "찌로", id: "ch1ch1r0" },
+            { name: "프하", id: "peuhaha" },
+            { name: "호발", id: "hobal115end" },
+            { name: "공도리", id: "swcmnb67" },
+            { name: "소호", id: "d0hxe823" },
+            { name: "한세현", id: "kangturtle" }
         ];
 
         const positions = ["top", "mid", "bottom", "support", "jungle"];
@@ -394,62 +594,161 @@
             "support": "서폿",
             "jungle": "정글"
         };
-        let activeUserIndices = new Set();
-        let isSpinning = false;
-        let animationId = null;
         
-        // 상태 플래그
-        let spinState = {
-            team: false,
-            user: false,
-            pos: false
-        };
-
-        // 결과 저장용
+        // 상태 관리
+        let activePresetIndices = new Set();
+        let customUsers = []; // Array of { name: string, active: boolean }
+        let assignedUsers = new Set(); // Globally assigned users (manual + roulette) 
+        
+        // 룰렛/팀 상태
         let redTeam = { top: null, jungle: null, mid: null, bottom: null, support: null };
         let blueTeam = { top: null, jungle: null, mid: null, bottom: null, support: null };
-        let assignedUsers = new Set();
+        let spinState = { team: false, user: false, pos: false };
+        let isSpinning = false;
+        let animationId = null;
 
-        const userGrid = document.getElementById('user-grid');
+        // DOM Elements
+        const presetUserGrid = document.getElementById('preset-user-grid');
+        const customUserGrid = document.getElementById('custom-user-grid');
+        const customDivider = document.getElementById('custom-divider');
+        const customCountSelect = document.getElementById('custom-count-select');
         const confirmBtn = document.getElementById('confirm-btn');
         const userSelection = document.getElementById('user-selection');
         const rouletteContainer = document.getElementById('roulette-container');
-        const spinBtn = document.getElementById('spin-btn');
-        const teamSpinLabel = document.getElementById('team-spin-label');
-        const resultDisplay = document.getElementById('result-display');
         const titleContainer = document.getElementById('title-container');
         const resetBtn = document.getElementById('reset-btn');
-        
+        const spinBtn = document.getElementById('spin-btn');
+        const resultDisplay = document.getElementById('result-display');
+        const teamSpinLabel = document.getElementById('team-spin-label');
         const userWheel = document.getElementById('user-wheel');
         const posWheel = document.getElementById('pos-wheel');
 
+        // 커스텀 유저 아이콘 SVG
+        const customUserSvg = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="#e3e3e3">
+                <path d="M480-481q-66 0-108-42t-42-108q0-66 42-108t108-42q66 0 108 42t42 108q0 66-42 108t-108 42ZM160-160v-94q0-38 19-65t49-41q67-30 128.5-45T480-420q62 0 123 15.5t127.92 44.69q31.3 14.13 50.19 40.97Q800-292 800-254v94H160Zm60-60h520v-34q0-16-9.5-30.5T707-306q-64-31-117-42.5T480-360q-57 0-111 11.5T252-306q-14 7-23 21.5t-9 30.5v34Zm260-321q39 0 64.5-25.5T570-631q0-39-25.5-64.5T480-721q-39 0-64.5 25.5T390-631q0 39 25.5 64.5T480-541Zm0-90Zm0 411Z"/>
+            </svg>
+        `;
+
         // 초기화
         function init() {
-            userList.forEach((name, index) => {
-                const item = document.createElement('div');
-                item.className = 'user-item';
-                item.innerHTML = `
-                    <div class="user-icon">${name[0]}</div>
-                    <div class="user-name">${name}</div>
-                `;
-                item.onclick = () => toggleUser(index, item);
-                userGrid.appendChild(item);
+            renderPresetUsers();
+            
+            // Custom Count Change Listener
+            customCountSelect.addEventListener('change', (e) => {
+                updateCustomUserCount(parseInt(e.target.value));
             });
-
-            // 슬롯 초기화
+            
+            // Initialize with 0
+            updateCustomUserCount(0);
             renderSlots();
         }
 
-        function toggleUser(index, element) {
-            if (activeUserIndices.has(index)) {
-                activeUserIndices.delete(index);
+        function getProfileImgUrl(id) {
+            const prefix = id.substring(0, 2);
+            return `https://stimg.sooplive.co.kr/LOGO/${prefix}/${id}/m/${id}.webp`;
+        }
+
+        function renderPresetUsers() {
+            presetUserGrid.innerHTML = '';
+            presetUsersData.forEach((user, index) => {
+                const item = document.createElement('div');
+                item.className = 'user-item preset';
+                item.innerHTML = `
+                    <div class="user-icon">
+                        <img src="${getProfileImgUrl(user.id)}" alt="${user.name}" loading="lazy">
+                    </div>
+                    <div class="user-name">${user.name}</div>
+                `;
+                item.onclick = () => togglePresetUser(index, item);
+                presetUserGrid.appendChild(item);
+            });
+        }
+
+        function togglePresetUser(index, element) {
+            if (activePresetIndices.has(index)) {
+                activePresetIndices.delete(index);
                 element.classList.remove('active');
             } else {
-                activeUserIndices.add(index);
+                activePresetIndices.add(index);
                 element.classList.add('active');
             }
+            checkConfirmButton();
+        }
 
-            if (activeUserIndices.size >= 10) {
+        function updateCustomUserCount(count) {
+            // Resize array, preserving existing data if possible
+            if (count > customUsers.length) {
+                for (let i = customUsers.length; i < count; i++) {
+                    customUsers.push({ name: `Custom ${i + 1}`, active: false });
+                }
+            } else if (count < customUsers.length) {
+                customUsers = customUsers.slice(0, count);
+            }
+
+            renderCustomUsers();
+        }
+
+        function renderCustomUsers() {
+            customUserGrid.innerHTML = '';
+            if (customUsers.length === 0) {
+                customUserGrid.style.display = 'none';
+                customDivider.style.display = 'none';
+                return;
+            }
+
+            customUserGrid.style.display = 'grid';
+            customDivider.style.display = 'block';
+
+            customUsers.forEach((user, index) => {
+                const item = document.createElement('div');
+                item.className = 'user-item custom';
+                if (user.active) item.classList.add('active');
+
+                // Icon part
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'user-icon';
+                iconDiv.innerHTML = customUserSvg;
+                iconDiv.onclick = () => toggleCustomUser(index, item);
+
+                // Input part
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'custom-name-input';
+                input.value = user.name;
+                
+                input.onchange = (e) => {
+                    customUsers[index].name = e.target.value;
+                };
+                input.onfocus = () => {
+                    // Optional: Highlight
+                };
+
+                item.appendChild(iconDiv);
+                item.appendChild(input);
+                customUserGrid.appendChild(item);
+            });
+        }
+
+        function toggleCustomUser(index, element) {
+            customUsers[index].active = !customUsers[index].active;
+            if (customUsers[index].active) {
+                element.classList.add('active');
+            } else {
+                element.classList.remove('active');
+            }
+            checkConfirmButton();
+        }
+
+        function getSelectedUserNames() {
+            const presetNames = Array.from(activePresetIndices).map(i => presetUsersData[i].name);
+            const customNames = customUsers.filter(u => u.active).map(u => u.name);
+            return [...presetNames, ...customNames];
+        }
+
+        function checkConfirmButton() {
+            // Assuming at least 1 person needed, typically 10 for 5v5 but allowing flexibility
+            if (getSelectedUserNames().length > 0) {
                 confirmBtn.classList.add('enabled');
             } else {
                 confirmBtn.classList.remove('enabled');
@@ -457,18 +756,33 @@
         }
 
         confirmBtn.onclick = () => {
-            if (activeUserIndices.size < 10) return;
+            if (!confirmBtn.classList.contains('enabled')) return;
             userSelection.style.display = 'none';
-            titleContainer.style.display = 'none'; // 타이틀 숨김
+            titleContainer.style.display = 'none';
             rouletteContainer.style.display = 'flex';
+            
             setupWheels();
         };
 
         resetBtn.onclick = () => {
-            if (confirm("처음으로 돌아가시겠습니까?")) {
-                location.reload();
+            if (confirm("룰렛을 초기화하고 유저 선택 화면으로 돌아갑니까?")) {
+                // Clear roulette state
+                assignedUsers.clear();
+                redTeam = { top: null, jungle: null, mid: null, bottom: null, support: null };
+                blueTeam = { top: null, jungle: null, mid: null, bottom: null, support: null };
+                renderSlots();
+                resultDisplay.innerText = '';
+                
+                // Show selection screen
+                rouletteContainer.style.display = 'none';
+                titleContainer.style.display = 'block';
+                userSelection.style.display = 'flex';
+                
+                // Note: customUsers array and activePresetIndices are NOT cleared, preserving settings.
             }
         };
+
+        // --- Roulette & Logic ---
 
         function renderSlots() {
             const redSlots = document.getElementById('red-slots');
@@ -477,33 +791,132 @@
             blueSlots.innerHTML = '';
 
             positions.forEach(pos => {
-                redSlots.innerHTML += createSlotHtml('red', pos);
-                blueSlots.innerHTML += createSlotHtml('blue', pos);
+                redSlots.appendChild(createSlotElement('red', pos));
+                blueSlots.appendChild(createSlotElement('blue', pos));
             });
         }
 
-        function createSlotHtml(team, pos) {
-            const userName = (team === 'red' ? redTeam[pos] : blueTeam[pos]) || '';
-            return `
-                <div class="position-slot">
-                    <div class="pos-icon" style="background-image: url('./assets/${pos}.png')"></div>
-                    <div class="slot-name">${pos.toUpperCase()}: ${userName}</div>
+        function createSlotElement(team, pos) {
+            const container = document.createElement('div');
+            container.className = 'position-slot';
+            container.dataset.team = team;
+            container.dataset.pos = pos;
+
+            const assignedName = (team === 'red' ? redTeam[pos] : blueTeam[pos]) || '';
+
+            container.innerHTML = `
+                <div class="pos-icon" style="background-image: url('./assets/${pos}.png')"></div>
+                <div class="slot-content">
+                    <div class="slot-pos-name">${positionNames[pos]}</div>
+                    <div class="slot-user-name">${assignedName}</div>
                 </div>
             `;
+
+            container.onclick = (e) => {
+                // Prevent dropdown opening if clicking existing dropdown
+                if (e.target.closest('.user-dropdown')) return;
+                openUserDropdown(container, team, pos);
+            };
+
+            return container;
+        }
+
+        function openUserDropdown(slotElement, team, pos) {
+            // Close any existing dropdowns
+            closeAllDropdowns();
+
+            const dropdown = document.createElement('div');
+            dropdown.className = 'user-dropdown show';
+
+            const allSelectedUsers = getSelectedUserNames();
+            
+            // "선택 안함" 옵션
+            const clearOption = document.createElement('div');
+            clearOption.className = 'dropdown-item clear';
+            clearOption.innerText = '(선택 해제)';
+            clearOption.onclick = () => {
+                manualAssign(team, pos, null);
+                dropdown.remove();
+            };
+            dropdown.appendChild(clearOption);
+
+            allSelectedUsers.forEach(user => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.innerText = user;
+                
+                // If user is already assigned somewhere else, maybe mark it?
+                if (assignedUsers.has(user)) {
+                    item.style.opacity = '0.5';
+                    item.innerText += ' (이미 배정됨)';
+                }
+
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    manualAssign(team, pos, user);
+                    dropdown.remove();
+                };
+                dropdown.appendChild(item);
+            });
+
+            slotElement.appendChild(dropdown);
+            
+            // Click outside to close
+            document.addEventListener('click', function close(e) {
+                if (!slotElement.contains(e.target)) {
+                    dropdown.remove();
+                    document.removeEventListener('click', close);
+                }
+            });
+        }
+
+        function closeAllDropdowns() {
+            document.querySelectorAll('.user-dropdown').forEach(el => el.remove());
+        }
+
+        function manualAssign(team, pos, userName) {
+            // 1. Remove previous user from this slot if any
+            const prevUser = team === 'red' ? redTeam[pos] : blueTeam[pos];
+            if (prevUser) {
+                assignedUsers.delete(prevUser);
+            }
+
+            // 2. If assigning a new user
+            if (userName) {
+                // Check if this user is already assigned elsewhere and remove them from there
+                if (assignedUsers.has(userName)) {
+                    // Find and clear
+                    for (const p of positions) {
+                        if (redTeam[p] === userName) redTeam[p] = null;
+                        if (blueTeam[p] === userName) blueTeam[p] = null;
+                    }
+                }
+                assignedUsers.add(userName);
+            }
+
+            // 3. Assign
+            if (team === 'red') redTeam[pos] = userName;
+            else blueTeam[pos] = userName;
+
+            // 4. Update UI
+            renderSlots();
         }
 
         function setupWheels() {
-            // 유저 휠 구성
-            const activeUsers = Array.from(activeUserIndices).map(i => userList[i]);
-            setupWheelContent(userWheel, activeUsers);
-            
-            // 포지션 휠 구성
+            const allSelected = getSelectedUserNames();
+            // Show only unassigned users in the wheel? 
+            // Or show all but spin logic handles exclusion?
+            // Usually visual feedback is nice, but keeping the wheel full looks better.
+            // Let's keep all selected users in the wheel for visuals, but logic will filter.
+            setupWheelContent(userWheel, allSelected);
             setupWheelContent(posWheel, positions, true);
         }
 
         function setupWheelContent(wheelEl, items, isPos = false) {
             wheelEl.innerHTML = '';
             const count = items.length;
+            if (count === 0) return;
+
             const angle = 360 / count;
             
             items.forEach((item, i) => {
@@ -522,7 +935,6 @@
                     segment.innerHTML = `<div class="wheel-label">${item}</div>`;
                 }
 
-                // 경계선 추가 (다음 칸과의 경계)
                 const divider = document.createElement('div');
                 divider.className = 'wheel-divider';
                 divider.style.transform = `rotate(${angle / 2}deg)`;
@@ -537,11 +949,20 @@
 
         spinBtn.onclick = () => {
             if (!isSpinning) {
-                // 검사: 더 이상 할당할 포지션이 있는지
+                // Pre-check for available slots and users
                 const availableRed = positions.filter(p => !redTeam[p]);
                 const availableBlue = positions.filter(p => !blueTeam[p]);
+                
                 if (availableRed.length === 0 && availableBlue.length === 0) {
                     alert("모든 포지션이 결정되었습니다!");
+                    return;
+                }
+
+                const allSelected = getSelectedUserNames();
+                const availableUsers = allSelected.filter(u => !assignedUsers.has(u));
+
+                if (availableUsers.length === 0) {
+                    alert("남은 유저가 없습니다.");
                     return;
                 }
 
@@ -557,28 +978,20 @@
             
             spinBtn.innerText = 'Stop';
             spinBtn.classList.add('stopping');
-            
-            // 텍스트 초기화
             resultDisplay.innerText = '';
             
-            // 초기화: transition 제거 (애니메이션 루프 제어)
             userWheel.style.transition = 'none';
             posWheel.style.transition = 'none';
 
             const rotate = () => {
-                // 유저 휠 회전
                 if (spinState.user) {
                     currentRotationUser += 10;
                     userWheel.style.transform = `rotate(-${currentRotationUser}deg)`;
                 }
-                
-                // 포지션 휠 회전
                 if (spinState.pos) {
                     currentRotationPos += 12;
                     posWheel.style.transform = `rotate(-${currentRotationPos}deg)`;
                 }
-                
-                // 팀 레이블 랜덤 깜빡임
                 if (spinState.team) {
                     teamSpinLabel.innerText = Math.random() > 0.5 ? 'RED' : 'BLUE';
                     teamSpinLabel.style.color = teamSpinLabel.innerText === 'RED' ? 'var(--red-color)' : 'var(--blue-color)';
@@ -592,30 +1005,18 @@
         }
 
         function stopSpin() {
-            isSpinning = false; // 버튼 상태 변경용
+            isSpinning = false;
             spinBtn.innerText = 'Spin';
             spinBtn.classList.remove('stopping');
             spinBtn.disabled = true;
 
-            // 딜레이 설정 값 가져오기
             const rootStyle = getComputedStyle(document.documentElement);
-            const delayTeam = parseInt(rootStyle.getPropertyValue('--delay-team').trim()) || 0;
-            const delayUser = parseInt(rootStyle.getPropertyValue('--delay-user').trim()) || 1000;
-            const delayPos = parseInt(rootStyle.getPropertyValue('--delay-position').trim()) || 2000;
+            const delayTeam = parseInt(rootStyle.getPropertyValue('--delay-team').trim()) || 500;
+            const delayUser = parseInt(rootStyle.getPropertyValue('--delay-user').trim()) || 2000;
+            const delayPos = parseInt(rootStyle.getPropertyValue('--delay-position').trim()) || 4000;
             const delayNextSpin = parseInt(rootStyle.getPropertyValue('--delay-next-spin').trim()) || 2000;
 
-            // 결과 미리 결정
-            const activeUsers = Array.from(activeUserIndices).map(i => userList[i])
-                .filter(u => !assignedUsers.has(u));
-            
-            if (activeUsers.length === 0) {
-                alert("남은 유저가 없습니다.");
-                cancelAnimationFrame(animationId);
-                spinBtn.disabled = false;
-                return;
-            }
-
-            // 1. 팀 결정
+            // Logic: Pick Team -> Pick available Pos -> Pick available User
             const availableRed = positions.filter(p => !redTeam[p]);
             const availableBlue = positions.filter(p => !blueTeam[p]);
             
@@ -628,65 +1029,59 @@
                 team = 'blue';
             }
 
-            // 2. 유저 결정
-            const userIndex = Math.floor(Math.random() * activeUsers.length);
-            const selectedUser = activeUsers[userIndex];
-
-            // 3. 포지션 결정
             const teamAvailablePos = team === 'red' ? availableRed : availableBlue;
             const posIndex = Math.floor(Math.random() * teamAvailablePos.length);
             const selectedPos = teamAvailablePos[posIndex];
 
-            // --- 1. Team Stop ---
+            const allSelected = getSelectedUserNames();
+            const availableUsers = allSelected.filter(u => !assignedUsers.has(u));
+            const userIndex = Math.floor(Math.random() * availableUsers.length);
+            const selectedUser = availableUsers[userIndex];
+
+            // 1. Team Stop
             setTimeout(() => {
                 spinState.team = false;
                 teamSpinLabel.innerText = team.toUpperCase();
                 teamSpinLabel.style.color = team === 'red' ? 'var(--red-color)' : 'var(--blue-color)';
             }, delayTeam);
 
-            // --- 2. User Wheel Stop ---
+            // 2. User Stop (Align with wheel)
             setTimeout(() => {
                 spinState.user = false;
                 
-                const activeAllUsers = Array.from(activeUserIndices).map(i => userList[i]);
-                const userWheelIndex = activeAllUsers.indexOf(selectedUser);
-                const userAngle = (360 / activeAllUsers.length) * userWheelIndex;
+                // Calculate angle for visual alignment
+                // Note: The wheel contains ALL selected users.
+                // We need to find the index of the selectedUser in the WHEEL list.
+                const wheelUserIndex = allSelected.indexOf(selectedUser);
+                const userAngle = (360 / allSelected.length) * wheelUserIndex;
                 
-                // 자연스러운 정지 각도 계산
                 currentRotationUser = Math.ceil(currentRotationUser / 360) * 360 + userAngle;
-                
                 userWheel.style.transition = 'transform 1.5s cubic-bezier(0.1, 0, 0.1, 1)';
                 userWheel.style.transform = `rotate(-${currentRotationUser}deg)`;
             }, delayUser);
 
-            // --- 3. Position Wheel Stop ---
+            // 3. Position Stop
             setTimeout(() => {
                 spinState.pos = false;
-
                 const posWheelIndex = positions.indexOf(selectedPos);
                 const posAngle = (360 / positions.length) * posWheelIndex;
-
                 currentRotationPos = Math.ceil(currentRotationPos / 360) * 360 + posAngle;
-
                 posWheel.style.transition = 'transform 1.5s cubic-bezier(0.1, 0, 0.1, 1)';
                 posWheel.style.transform = `rotate(-${currentRotationPos}deg)`;
             }, delayPos);
 
-            // --- Final Update ---
-            // 가장 긴 딜레이 + 애니메이션 시간(1.5s) 후 반영
+            // 4. Finalize
             const maxDelay = Math.max(delayTeam, delayUser, delayPos);
             setTimeout(() => {
                 if (team === 'red') redTeam[selectedPos] = selectedUser;
                 else blueTeam[selectedPos] = selectedUser;
                 assignedUsers.add(selectedUser);
+                
                 renderSlots();
-
-                // 결과 텍스트 노출
                 resultDisplay.innerText = `${selectedUser} - ${team.toUpperCase()} - ${selectedPos.toUpperCase()}`;
                 resultDisplay.style.color = team === 'red' ? 'var(--red-color)' : 'var(--blue-color)';
             }, maxDelay + 1500);
 
-            // 버튼 다시 활성화
             setTimeout(() => {
                 spinBtn.disabled = false;
             }, maxDelay + 1500 + delayNextSpin);
