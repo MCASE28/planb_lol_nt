@@ -638,6 +638,12 @@
         let isSpinning = false;
         let animationId = null;
 
+        // Audio Objects
+        const spinAudio = new Audio('./assets/spin.mp3');
+        spinAudio.loop = true;
+        const spinEndAudio = new Audio('./assets/spin_end.mp3');
+        const decideAudio = new Audio('./assets/decide.mp3');
+
         // DOM Elements
         const presetUserGrid = document.getElementById('preset-user-grid');
         const customUserGrid = document.getElementById('custom-user-grid');
@@ -1035,6 +1041,7 @@
         };
 
         function startSpin() {
+            spinAudio.play().catch(e => console.error("Audio play failed", e));
             isSpinning = true;
             spinBtn.innerText = 'Stop';
             spinBtn.classList.add('stopping');
@@ -1091,6 +1098,10 @@
         }
 
         function stopSpin() {
+            spinAudio.pause();
+            spinAudio.currentTime = 0;
+            spinEndAudio.play().catch(e => console.error("Audio play failed", e));
+
             isSpinning = false; // Logic flag
             spinBtn.disabled = true;
             spinBtn.innerText = 'Spinning...';
@@ -1147,7 +1158,7 @@
                     // Calculate final pixel offset
                     const finalOffset = targetIndex * slotHeight;
                     
-                    reelEl.style.transition = 'transform 2.5s cubic-bezier(0.1, 0, 0.1, 1)';
+                    reelEl.style.transition = 'transform 1.5s cubic-bezier(0.1, 0, 0.1, 1)';
                     reelEl.style.transform = `translateY(-${finalOffset}px)`;
                     
                     slotOffsets[type] = finalOffset;
@@ -1157,15 +1168,19 @@
             
             // Delays for sequence: Name -> Team -> Pos
             const delayUser = 0;
-            const delayTeam = 1500;
-            const delayPos = 3000;
-            const finishDelay = 6000;
+            const delayTeam = 500;
+            const delayPos = 1000;
+            const finishDelay = 2500;
 
             stopReel('user', selectedUser, allSelected, delayUser);
             stopReel('team', team.toUpperCase(), ['RED', 'BLUE'], delayTeam);
             stopReel('pos', selectedPos, positions, delayPos);
             
             // Finalize
+            setTimeout(() => {
+                decideAudio.play().catch(e => console.error("Audio play failed", e));
+            }, 2750); // Play after 4s as requested
+
             setTimeout(() => {
                 if (team === 'red') redTeam[selectedPos] = selectedUser;
                 else blueTeam[selectedPos] = selectedUser;
@@ -1181,7 +1196,7 @@
                 spinBtn.classList.remove('stopping');
                 spinBtn.disabled = false;
                 
-            }, finishDelay);
+            }, finishDelay); // Finish at 2500ms
         }
 
         init();
